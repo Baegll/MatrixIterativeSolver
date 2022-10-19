@@ -50,9 +50,8 @@ for a in range(nxn):
     print(f"A =\n{a_matrix}")
     # ask user for input to specific variable, and assign it
     print(f"\n{a_list[a]} = ?")
-    a_list[a] = (input())
-    a_list[a_list == ''] = 0
-    # Convert a_list to matrix
+    a_list[a] = int(input())
+    # Convert a_list to np.matrix
     a_sub_lists = [a_list[i:i + size] for i in range(0, len(a_list), size)]
     a_matrix = np.asarray(a_sub_lists, dtype=object)
 
@@ -61,6 +60,8 @@ b_list = []
 # generate bn value for b_list
 for b in range(size):
     b_list.append(f"b{b+1}")
+# convert list to np.matrix (vector)
+b_vector = np.array(b_list)
 
 # ask user for each value of vector
 for b in range(size):
@@ -70,29 +71,56 @@ for b in range(size):
     p_vector(b_list)
     # ask user for input to specific variable, and assign it
     print(f"\n{b_list[b]} = ?")
-    b_list[b] = input()
+    b_list[b] = int(input())
+    b_vector = np.array(b_list)
 
 
 print("Provide initial guess")
 init_guess = int(input())
-
-# create init_value x0 list
 x = []
 for i in range(size):
     x.append(init_guess)
 
-# convert to float
-a_matrix = a_matrix.astype(float)
-b_list = np.array(b_list)
-b_list = b_list.astype(float)
 
-# create D and R matrix
-D = np.diag(a_matrix)
-R = a_matrix - np.diagflat(D)
+# convert to matrix to float
+A = a_matrix.astype(float)
+print(f"A:\n{A}")
+b = b_vector.astype(float)
+print(f"b:\n{b}")
+# create D and R matrix, as type float
+D = np.diag(np.diag(a_matrix)).astype(float)
+print(f"D:\n{D}")
+N = D - A
+print(f"N:\n{N}")
+D_inverse = np.linalg.inv(D)
+print(f"D_inverse:\n{D_inverse}")
 
-# compute x(k)
-for i in range(25):
-    x = (b_list - np.dot(R, x)) / D
-    print(f"iteration {i+1}: {x}")
+print("\nFormula: xk+1 = D^-1[(N)*xk+b]\n")
 
-print(f"\nFinal: {x}")
+print(f"x0={x}")
+for i in range(3):
+    Nx = N.dot(x)
+    print(f"Nx={Nx}")
+    Nxb = Nx + b
+    print(f"Nxb={Nxb}")
+    x = D_inverse.dot(Nxb)
+    print(f"d_inv*Nxb={x}")
+    x = np.diag(x)
+    print(f"Iteration {i+1}: x={x}\n")
+    x = x.tolist()
+
+print(f"jacobi solution: {np.diag(x)}")
+
+x = np.zeros_like(b)
+for it_count in range(3):
+    x_new = np.zeros_like(x)
+    print(f"Iteration {it_count}: {x}")
+    for i in range(A.shape[0]):
+        s1 = np.dot(A[i, :i], x_new[:i])
+        s2 = np.dot(A[i, i + 1:], x[i + 1:])
+        x_new[i] = (b[i] - s1 - s2) / A[i, i]
+    if np.allclose(x, x_new, rtol=1e-8):
+        break
+    x = x_new
+
+print(f"gauss-seidel solution: {x}")
